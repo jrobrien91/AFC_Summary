@@ -14,7 +14,7 @@ import importlib
 from scipy import stats
 from matplotlib.dates import DateFormatter
 from matplotlib.dates import HourLocator
-
+from matplotlib.backends.backend_pdf import PdfPages
 
 def get_doi(site, dsname, c_start, c_end):
     # Get DOI Information from ARM's API
@@ -28,13 +28,16 @@ def get_doi(site, dsname, c_start, c_end):
     return doi
 
 
-def get_metadata(ds):
+def get_metadata(ds, return_fac=False):
     # Get Metadata Information, particularly the description
     metadata_url = 'https://adc.arm.gov/solr8/metadata/select?q=datastream%3A' + ds
     r = requests.get(url=metadata_url)
     response = r.json()['response']
     response = response['docs'][0]
     description = response['instrument_name_text']
+
+    if return_fac:
+        description = response['facility_name']
 
     return description
 
@@ -151,16 +154,24 @@ if __name__ == '__main__':
     start = pd.to_datetime(c_start)
     end = pd.to_datetime(c_end)
     c_dates = pd.date_range(start, end + dt.timedelta(days=1), freq='d')
-    c_dates = c_dates
+    #c_dates = c_dates[0:5]
 
     # Set up Plot
-    nrows = len(inst)
+    #nrows = len(inst)
+    nrows = 8
+    ct = 0
     ncols = 3
-    fig = plt.figure(figsize=(10, 1.5 * nrows), constrained_layout=True)
-    gs = fig.add_gridspec(nrows, ncols)
+
+    if 'outname' in conf:
+        filename = conf['outname']
+    pdf_pages = PdfPages(filename)
 
     # Process each instrument
     for ii in range(len(inst)):
+        if ct ==  0:
+            fig = plt.figure(figsize=(8.27, 11.69), constrained_layout=True, dpi=100)
+            gs = fig.add_gridspec(nrows, ncols)
+
         dsname = conf['instruments'][inst[ii]]['dsname']
         ds = conf['site'] + dsname
         print(ds)
@@ -177,6 +188,16 @@ if __name__ == '__main__':
         workers = None
         if 'workers' in conf['instruments'][inst[ii]]:
             workers = conf['instruments'][inst[ii]]['workers']
+
+        if ii == 0:
+            ax0 = fig.add_subplot(gs[ct, :])
+            ax0.set_frame_on(False)
+            ax0.get_xaxis().set_visible(False)
+            ax0.get_yaxis().set_visible(False)
+            description = get_metadata(ds, return_fac=True)
+            ax0.text(0.5, 0.7, description, size=20,  ha='center')
+            ax0.text(0.5, 0.4, 'Atmospheric Radiation Measurement User Facility', size=16,  ha='center')
+            ct += 1
        
         # Dask loop for multiprocessing
         # workers should be set to 1 in the conf file for radars 
@@ -195,7 +216,7 @@ if __name__ == '__main__':
 
         # Add Subplot and start adding text
         # Just text on this plot
-        ax0 = fig.add_subplot(gs[ii, 0])
+        ax0 = fig.add_subplot(gs[ct, 0])
         ax0.set_frame_on(False)
         ax0.get_xaxis().set_visible(False)
         ax0.get_yaxis().set_visible(False)
@@ -214,15 +235,21 @@ if __name__ == '__main__':
         ax0.text(0, doi_y, '\n'.join(textwrap.wrap(doi, width=45)), va='top', size=fs)
 
         # Plot out the DA on the right plots
-        ax1 = fig.add_subplot(gs[ii, 1:])
+        ax1 = fig.add_subplot(gs[ct, 1:])
         y = pd.date_range(start, start + dt.timedelta(days=1), freq=str(t_delta) + 'T', closed='left')
         ax1.pcolormesh(c_dates, y, np.transpose(img), vmin=0, cmap='Blues', shading='flat')
         ax1.yaxis.set_major_locator(HourLocator(interval=6))
         ax1.yaxis.set_major_formatter(DateFormatter('%H:%M'))
         ax1.set_xlim([pd.to_datetime(c_start), pd.to_datetime(c_end) + pd.Timedelta('1 days')])
 
-    ext = 'png'
-    if 'outname' in conf:
-        filename = conf['outname']
-    plt.savefig(filename)
+        ct += 1
+        if ct == nrows:
+            pdf_pages.savefig(fig)
+            ct =  0
+    pdf_pages.savefig(fig)
+    pdf_pages.close()
+
+    #if 'outname' in conf:
+    #    filename = conf['outname']
+    #plt.savefig(filename)
     print(pd.Timestamp.now() - now)

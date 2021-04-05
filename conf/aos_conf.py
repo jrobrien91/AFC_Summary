@@ -7,7 +7,7 @@ conf = {
     'facility': 'M1',
     'start_date': '2019-12-01',
     'end_date': '2020-05-31',
-    'outname': '/home/theisen/www/aos.pdf', #options are png, pdf, etc
+    'outname': '/home/theisen/www/afc_summary/aos.pdf', #options are png, pdf, etc
     'instruments':{
         'acsm': {'dsname': 'aosacsmM1.b1', 't_delta': 30},
         'aeth': {'dsname': 'aosaeth2spotM1.a1'},

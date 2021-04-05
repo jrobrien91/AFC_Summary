@@ -7,7 +7,7 @@ conf = {
     'facility': 'M1',
     'start_date': '2019-12-01',
     'end_date': '2020-05-31',
-    'outname': '/home/theisen/www/anx.pdf', #options are png, pdf, etc
+    'outname': '/home/theisen/www/afc_summary/anx.pdf', #options are png, pdf, etc
     'instruments':{
         'aeri': {'dsname': 'aerisummaryM1.b1'},
         'ceil': {'dsname': 'ceilM1.b1'},
