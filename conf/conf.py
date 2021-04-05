@@ -7,8 +7,8 @@ conf = {
     'facility': 'M1',
     'start_date': '2019-12-01',
     'end_date': '2020-05-31',
-    'ext': 'png', # Available options are image files (png, jpg, etc) or pdf
+    'outname': '/home/theisen/www/afc_summary/test_conf.pdf',
     'instruments':{
-        'mfrsr': {'dsname': 'mfrsrM1.b1'},
+        'rwp': {'dsname': '1290rwpprecipconM1.a1', 'dsname2': '1290rwpwindconM1.a1', 't_delta': 10},
     }
 }

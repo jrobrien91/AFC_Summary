@@ -190,15 +190,14 @@ if __name__ == '__main__':
             workers = conf['instruments'][inst[ii]]['workers']
 
         if ii == 0:
-            ax0 = fig.add_subplot(gs[ct, :], rasterized=True)
-            ax0.set_rasterization_zorder(1)
+            ax0 = fig.add_subplot(gs[ct, :])
             ax0.set_frame_on(False)
             ax0.get_xaxis().set_visible(False)
             ax0.get_yaxis().set_visible(False)
             description = get_metadata(ds, return_fac=True)
-            ax0.text(0.5, 0.7, description, size=20,  ha='center', zorder=0)
+            ax0.text(0.5, 0.7, description, size=20,  ha='center')
             ax0.text(0.5, 0.4, 'Atmospheric Radiation Measurement User Facility', size=16,
-                     ha='center', zorder=0)
+                     ha='center')
             ct += 1
        
         # Dask loop for multiprocessing
@@ -218,23 +217,29 @@ if __name__ == '__main__':
 
         # Add Subplot and start adding text
         # Just text on this plot
-        ax0 = fig.add_subplot(gs[ct, 0], rasterized=True)
+        ax0 = fig.add_subplot(gs[ct, 0])
         ax0.set_frame_on(False)
         ax0.get_xaxis().set_visible(False)
         ax0.get_yaxis().set_visible(False)
         fs = 8
-        ax0.text(0, 0.9, '\n'.join(textwrap.wrap(description, width=45)), size=fs, zorder=0)
-        ax0.text(0, 0.8, 'ARM Name: ' + inst[ii].upper(), size=fs, zorder=0)
+        yi = 0.95
+        tw = 47
+        ax0.text(0, yi, '\n'.join(textwrap.wrap(description, width=tw)), size=fs, va='top')
+        yi -= 0.125
+        if len(description) > tw:
+           yi -= 0.1 * np.floor(len(description)/tw)
+        ax0.text(0, yi, 'ARM Name: ' + inst[ii].upper(), size=fs, va='top')
+        yi -= 0.125
         ds_str = ds
-        doi_y = 0.6
         if dsname2 is not None:
             ds_str += ', ' + ds2
-            if len(ds_str) > 45:
-               doi_y -= 0.05 * np.floor(len(ds_str)/45)
-            ds_str = '\n'.join(textwrap.wrap(ds_str, width=45))
+        ds_str = '\n'.join(textwrap.wrap(ds_str, width=tw))
             
-        ax0.text(0, 0.7, 'Datastream: ' + ds_str, size=fs, zorder=0)
-        ax0.text(0, doi_y, '\n'.join(textwrap.wrap(doi, width=45)), va='top', size=fs, zorder=0)
+        ax0.text(0, yi, 'Datastream: ' + ds_str, size=fs, va='top')
+        yi -= 0.15
+        if len(ds_str) > tw:
+           yi -= 0.1 * np.floor(len(ds_str)/tw)
+        ax0.text(0, yi, '\n'.join(textwrap.wrap(doi, width=tw)), va='top', size=fs)
 
         # Plot out the DA on the right plots
         ax1 = fig.add_subplot(gs[ct, 1:], rasterized=True)
