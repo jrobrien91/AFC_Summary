@@ -15,6 +15,34 @@ from scipy import stats
 from matplotlib.dates import DateFormatter
 from matplotlib.dates import HourLocator
 from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.colors import ListedColormap
+from matplotlib import cm
+
+
+def get_dqr(ds):
+    url = ''.join(("https://www.archive.arm.gov/dqrws/ARMDQR?datastream=", ds,
+                   "&dqrfields=dqrid,starttime,endtime,metric,subject&timeformat=YYYYMMDD.hhmmss",
+                   "&searchmetric=incorrect,suspect"))
+    r = requests.get(url=url)
+    num = []
+    sdate = []
+    edate = []
+    code = []
+    sub = []
+    for line in r.iter_lines():
+        # filter out keep-alive new lines
+        if line:
+            decoded_line = line.decode('utf-8')
+            result = decoded_line.split('|')
+   
+            num.append(result[0])
+            sdate.append(result[1])
+            edate.append(result[2])
+            code.append(result[3])
+            sub.append(result[4])
+
+    return {'dqr_num': num, 'sdate': sdate, 'edate': edate, 'code': code, 'subject': sub}
+
 
 def get_doi(site, dsname, c_start, c_end):
     # Get DOI Information from ARM's API
@@ -42,7 +70,7 @@ def get_metadata(ds, return_fac=False):
     return description
 
 
-def get_da(site, dsname, dsname2, t_delta, d):
+def get_da(site, dsname, dsname2, t_delta, d, dqr):
     """
     Function to calculate data availability for a particular instrument
 
@@ -113,17 +141,36 @@ def get_da(site, dsname, dsname2, t_delta, d):
     df1 = pd.DataFrame({'counts': np.zeros(len(d_range))}, index=d_range)
 
     # Join datasets with dataframe and where counts > 0 set to 100 for color
+    code_map = {'suspect':  2, 'incorrect': 3}
     if len(files) > 0:
         counts = obj['time'].resample(time=str(t_delta) + 'min').count().to_dataframe()
+        counts[counts > 1] = 1
+        dqr_counts = counts * 0.
+        # Flag data for  DQRs
+        # Work on passing DQR times to get_da to flag
+        for jj, d in enumerate(dqr['dqr_num']):
+            dqr_start = dt.datetime.strptime(dqr['sdate'][jj], '%Y%m%d.%H%M%S')
+            dqr_end = dt.datetime.strptime(dqr['edate'][jj], '%Y%m%d.%H%M%S')
+            idx = (counts.index > dqr_start) & (counts.index < dqr_end)
+            idx = np.where(idx)[0]
+            assessment = dqr['code'][jj]
+            if len(idx) > 0:
+                dqr_counts.iloc[idx]  = code_map[assessment]
+
         data = df1.join(counts)
-        data.loc[data['time'] > 0, 'time'] = 100
+        data.loc[data['time'] > 0, 'time'] = 1
         r_data = np.nan_to_num(data['time'].tolist())
+
+        dqr_data = df1.join(dqr_counts)
+        dqr_data.loc[dqr_data['time'] == 0, 'time'] = np.nan
+        dqr_data = dqr_data['time'].tolist()
         obj.close()
     else:
         data = df1
         r_data = np.nan_to_num(data['counts'].tolist())
+        dqr_data = r_data * 0.
 
-    return {'data': r_data, 't_delta': t_delta}
+    return {'data': r_data, 't_delta': t_delta, 'date': d0, 'dqr_data': dqr_data}
 
 
 if __name__ == '__main__':
@@ -174,6 +221,8 @@ if __name__ == '__main__':
 
         dsname = conf['instruments'][inst[ii]]['dsname']
         ds = conf['site'] + dsname
+
+        dqr = get_dqr(ds)
         print(ds)
         dsname2 = None
         ds2 = None
@@ -195,21 +244,25 @@ if __name__ == '__main__':
             ax0.get_xaxis().set_visible(False)
             ax0.get_yaxis().set_visible(False)
             description = get_metadata(ds, return_fac=True)
-            ax0.text(0.5, 0.7, description, size=20,  ha='center')
-            ax0.text(0.5, 0.4, 'Atmospheric Radiation Measurement User Facility', size=16,
+            ax0.text(0.5, 0.7, '\n'.join(textwrap.wrap(description, width=50)), size=16,  ha='center')
+            ax0.text(0.5, 0.4, 'Atmospheric Radiation Measurement User Facility', size=14,
                      ha='center')
             ct += 1
-       
+
         # Dask loop for multiprocessing
         # workers should be set to 1 in the conf file for radars 
         task = []
+        c_dates = c_dates
         for jj, d in enumerate(c_dates):
-            #task.append(get_da(site, dsname, dsname2, t_delta, d.strftime('%Y%m%d')))
-            task.append(dask.delayed(get_da)(site, dsname, dsname2, t_delta, d.strftime('%Y%m%d')))
+            #task.append(get_da(site, dsname, dsname2, t_delta, d.strftime('%Y%m%d'), dqr))
+            task.append(dask.delayed(get_da)(site, dsname, dsname2, t_delta, d.strftime('%Y%m%d'), dqr))
         results = dask.compute(*task, num_workers=workers)
 
-        img = [list(r['data']) for r in results]
         t_delta = int(stats.mode([r['t_delta'] for r in results])[0][0])
+        y_times = pd.date_range(start, start + dt.timedelta(days=1), freq=str(t_delta) + 'T', closed='left')
+        y_times_time = np.array([ti.time() for ti in y_times])
+        img = [list(r['data']) for r in results]
+        dqr_img = [list(r['dqr_data']) for r in results]
 
         # Get DOI Information
         doi = get_doi(site, dsname, c_start, c_end)
@@ -242,13 +295,14 @@ if __name__ == '__main__':
         ax0.text(0, yi, '\n'.join(textwrap.wrap(doi, width=tw)), va='top', size=fs)
 
         # Plot out the DA on the right plots
+        newcmp = ListedColormap(['white', 'cornflowerblue', 'yellow', 'red'])
+
         ax1 = fig.add_subplot(gs[ct, 1:], rasterized=True)
-        y = pd.date_range(start, start + dt.timedelta(days=1), freq=str(t_delta) + 'T', closed='left')
-        ax1.pcolormesh(c_dates, y, np.transpose(img), vmin=0, cmap='Blues', shading='flat', zorder=0)
+        ax1.pcolormesh(c_dates, y_times, np.transpose(img), vmin=0, vmax=3, cmap=newcmp, shading='flat', zorder=0, edgecolors='face')
+        ax1.pcolor(c_dates, y_times, np.transpose(dqr_img), hatch='/', zorder=0, alpha=0)
         ax1.yaxis.set_major_locator(HourLocator(interval=6))
         ax1.yaxis.set_major_formatter(DateFormatter('%H:%M'))
         ax1.set_xlim([pd.to_datetime(c_start), pd.to_datetime(c_end) + pd.Timedelta('1 days')])
-
 
         ct += 1
         if ct == nrows:

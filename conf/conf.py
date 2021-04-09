@@ -9,6 +9,6 @@ conf = {
     'end_date': '2020-05-31',
     'outname': '/home/theisen/www/afc_summary/test_conf.pdf',
     'instruments':{
-        'rwp': {'dsname': '1290rwpprecipconM1.a1', 'dsname2': '1290rwpwindconM1.a1', 't_delta': 10},
+        'rwp': {'dsname': 'metwxtS2.b1'},
     }
 }
