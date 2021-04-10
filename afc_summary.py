@@ -20,10 +20,22 @@ from matplotlib import cm
 
 
 def get_dqr(ds):
+    """
+    Queries DQR webservice for the datastream name passed in
+
+    Parameters
+    ----------
+    ds : str
+        ARM datastream name (ie, sgpmetE13.b1).
+
+    """
+    # Build URL and call through requests
     url = ''.join(("https://www.archive.arm.gov/dqrws/ARMDQR?datastream=", ds,
                    "&dqrfields=dqrid,starttime,endtime,metric,subject&timeformat=YYYYMMDD.hhmmss",
                    "&searchmetric=incorrect,suspect"))
     r = requests.get(url=url)
+
+    # Run through the returns and compile data
     num = []
     sdate = []
     edate = []
@@ -34,7 +46,6 @@ def get_dqr(ds):
         if line:
             decoded_line = line.decode('utf-8')
             result = decoded_line.split('|')
-   
             num.append(result[0])
             sdate.append(result[1])
             edate.append(result[2])
@@ -63,7 +74,6 @@ def get_metadata(ds, return_fac=False):
     response = r.json()['response']
     response = response['docs'][0]
     description = response['instrument_name_text']
-
     if return_fac:
         description = response['facility_name']
 
@@ -87,6 +97,9 @@ def get_da(site, dsname, dsname2, t_delta, d, dqr):
         Pre-defined time delta to use, otherwise resample to 1 minute
     d : str
         Date to process DA for
+    dqr : dict
+        Dictionary from get_dqr.  This allows for DQRing of data without
+        multiple pings of the DQR web service at once
 
     Returns
     -------
@@ -116,7 +129,7 @@ def get_da(site, dsname, dsname2, t_delta, d, dqr):
     else:
         obj = None
 
-    # Read data for primary datastream
+    # Read data for secondary datastream
     if dsname2 is not None:
         ds2 = site + dsname2
         files2 = glob.glob('/data/archive/' + site + '/' + ds2 + '/' + ds2 + '*' + d + '*nc')
@@ -140,7 +153,7 @@ def get_da(site, dsname, dsname2, t_delta, d, dqr):
     d_range = pd.date_range(d0, d1, freq=str(t_delta) + 'T', closed='left')
     df1 = pd.DataFrame({'counts': np.zeros(len(d_range))}, index=d_range)
 
-    # Join datasets with dataframe and where counts > 0 set to 100 for color
+    # Join datasets with dataframe
     code_map = {'suspect':  2, 'incorrect': 3}
     if len(files) > 0:
         counts = obj['time'].resample(time=str(t_delta) + 'min').count().to_dataframe()
@@ -180,18 +193,19 @@ if __name__ == '__main__':
     Author : Adam Theisen
     """
 
+    # Time trials
+    now = pd.Timestamp.now()
+
+    # Get configuration file passed in from command line
     parser = argparse.ArgumentParser(description='Create campaign summary plots.')
     parser.add_argument('-c', '--conf', type=str, required=True,
                        help='Conf file to get information from')
     args = parser.parse_args()
 
+    # Executes the config file so that the variables are accessible to this program
     exec(open(args.conf).read())
 
-    # Time trials
-    now = pd.Timestamp.now()
-
-    # Import Configuration File
-    #rom conf.conf import conf
+    # Get configuration information
     site = conf['site']
     inst = list(conf['instruments'].keys())
     c_start = conf['start_date']
@@ -203,12 +217,12 @@ if __name__ == '__main__':
     c_dates = pd.date_range(start, end + dt.timedelta(days=1), freq='d')
     #c_dates = c_dates[0:5]
 
-    # Set up Plot
-    #nrows = len(inst)
+    # Set up plot layout.  Since it's a PDF, it's  8 plots per page
     nrows = 8
-    ct = 0
     ncols = 3
+    ct = 0
 
+    # Create pdf file
     if 'outname' in conf:
         filename = conf['outname']
     pdf_pages = PdfPages(filename)
@@ -221,23 +235,28 @@ if __name__ == '__main__':
 
         dsname = conf['instruments'][inst[ii]]['dsname']
         ds = conf['site'] + dsname
+        print(ds)
 
         dqr = get_dqr(ds)
-        print(ds)
         dsname2 = None
         ds2 = None
+        # Get secondary datastream if specified
         if 'dsname2' in conf['instruments'][inst[ii]]:
             dsname2 = conf['instruments'][inst[ii]]['dsname2']
             ds2 = site + dsname2
 
+        # Get time delta if specified
         t_delta = None
         if 't_delta' in conf['instruments'][inst[ii]]:
             t_delta = conf['instruments'][inst[ii]]['t_delta']
 
+        # Get number of workers if defined.  Should be 1 worker for radars to
+        # avoid core dumps
         workers = None
         if 'workers' in conf['instruments'][inst[ii]]:
             workers = conf['instruments'][inst[ii]]['workers']
 
+        # Set up the initial title of the doc
         if ii == 0:
             ax0 = fig.add_subplot(gs[ct, :])
             ax0.set_frame_on(False)
@@ -258,6 +277,7 @@ if __name__ == '__main__':
             task.append(dask.delayed(get_da)(site, dsname, dsname2, t_delta, d.strftime('%Y%m%d'), dqr))
         results = dask.compute(*task, num_workers=workers)
 
+        # Get data from dask and create images for display
         t_delta = int(stats.mode([r['t_delta'] for r in results])[0][0])
         y_times = pd.date_range(start, start + dt.timedelta(days=1), freq=str(t_delta) + 'T', closed='left')
         y_times_time = np.array([ti.time() for ti in y_times])
@@ -296,9 +316,9 @@ if __name__ == '__main__':
 
         # Plot out the DA on the right plots
         newcmp = ListedColormap(['white', 'cornflowerblue', 'yellow', 'red'])
-
         ax1 = fig.add_subplot(gs[ct, 1:], rasterized=True)
-        ax1.pcolormesh(c_dates, y_times, np.transpose(img), vmin=0, vmax=3, cmap=newcmp, shading='flat', zorder=0, edgecolors='face')
+        ax1.pcolormesh(c_dates, y_times, np.transpose(img), vmin=0, vmax=3,
+                       cmap=newcmp, shading='flat', zorder=0, edgecolors='face')
         ax1.pcolor(c_dates, y_times, np.transpose(dqr_img), hatch='/', zorder=0, alpha=0)
         ax1.yaxis.set_major_locator(HourLocator(interval=6))
         ax1.yaxis.set_major_formatter(DateFormatter('%H:%M'))
@@ -311,7 +331,4 @@ if __name__ == '__main__':
     pdf_pages.savefig(fig)
     pdf_pages.close()
 
-    #if 'outname' in conf:
-    #    filename = conf['outname']
-    #plt.savefig(filename)
     print(pd.Timestamp.now() - now)
