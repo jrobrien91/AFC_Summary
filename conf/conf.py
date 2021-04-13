@@ -8,7 +8,10 @@ conf = {
     'start_date': '2019-12-01',
     'end_date': '2020-05-31',
     'outname': '/home/theisen/www/afc_summary/test_conf.pdf',
+    'dqr_table': True,
+    'doi_table': True, #this will remove the DOI from besides the plots
     'instruments':{
         'rwp': {'dsname': 'metwxtS2.b1'},
+        'wb': {'dsname': 'wbpluvio2M1.a1'}
     }
 }

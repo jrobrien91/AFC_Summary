@@ -32,7 +32,7 @@ def get_dqr(ds):
     # Build URL and call through requests
     url = ''.join(("https://www.archive.arm.gov/dqrws/ARMDQR?datastream=", ds,
                    "&dqrfields=dqrid,starttime,endtime,metric,subject&timeformat=YYYYMMDD.hhmmss",
-                   "&searchmetric=incorrect,suspect"))
+                   "&searchmetric=incorrect,suspect,missing"))
     r = requests.get(url=url)
 
     # Run through the returns and compile data
@@ -154,7 +154,7 @@ def get_da(site, dsname, dsname2, t_delta, d, dqr):
     df1 = pd.DataFrame({'counts': np.zeros(len(d_range))}, index=d_range)
 
     # Join datasets with dataframe
-    code_map = {'suspect':  2, 'incorrect': 3}
+    code_map = {'suspect':  2, 'incorrect': 3, 'missing': 4}
     if len(files) > 0:
         counts = obj['time'].resample(time=str(t_delta) + 'min').count().to_dataframe()
         counts[counts > 1] = 1
@@ -215,7 +215,7 @@ if __name__ == '__main__':
     start = pd.to_datetime(c_start)
     end = pd.to_datetime(c_end)
     c_dates = pd.date_range(start, end + dt.timedelta(days=1), freq='d')
-    #c_dates = c_dates[0:5]
+    #c_dates = c_dates[0:2]
 
     # Set up plot layout.  Since it's a PDF, it's  8 plots per page
     nrows = 8
@@ -228,6 +228,8 @@ if __name__ == '__main__':
     pdf_pages = PdfPages(filename)
 
     # Process each instrument
+    doi_tab = []
+    dqr_tab = []
     for ii in range(len(inst)):
         if ct ==  0:
             fig = plt.figure(figsize=(8.27, 11.69), constrained_layout=True, dpi=100)
@@ -238,6 +240,14 @@ if __name__ == '__main__':
         print(ds)
 
         dqr = get_dqr(ds)
+        dqr_no = []
+        if conf['dqr_table'] is True:
+            for jj, d  in enumerate(dqr['dqr_num']):
+                if dqr['dqr_num'][jj] in dqr_no:
+                    continue
+                dqr_no.append(dqr['dqr_num'][jj])
+                dqr_tab.append([ds, dqr['dqr_num'][jj], dqr['code'][jj], '\n'.join(textwrap.wrap(dqr['subject'][jj], width=50)),
+                                dqr['sdate'][jj], dqr['edate'][jj]])
         dsname2 = None
         ds2 = None
         # Get secondary datastream if specified
@@ -286,6 +296,8 @@ if __name__ == '__main__':
 
         # Get DOI Information
         doi = get_doi(site, dsname, c_start, c_end)
+        if conf['doi_table'] is True:
+            doi_tab.append([inst[ii].upper(), '\n'.join(textwrap.wrap(doi, width=90))])
         description = get_metadata(ds)
 
         # Add Subplot and start adding text
@@ -312,7 +324,8 @@ if __name__ == '__main__':
         yi -= 0.15
         if len(ds_str) > tw:
            yi -= 0.1 * np.floor(len(ds_str)/tw)
-        ax0.text(0, yi, '\n'.join(textwrap.wrap(doi, width=tw)), va='top', size=fs)
+        if conf['doi_table'] is False:
+            ax0.text(0, yi, '\n'.join(textwrap.wrap(doi, width=tw)), va='top', size=fs)
 
         # Plot out the DA on the right plots
         newcmp = ListedColormap(['white', 'cornflowerblue', 'yellow', 'red'])
@@ -329,6 +342,48 @@ if __name__ == '__main__':
             pdf_pages.savefig(fig)
             ct =  0
     pdf_pages.savefig(fig)
+    fig.clf()
+
+    if conf['dqr_table'] is True:
+        header = ['Datastream', 'DQR', 'Quality', 'Subject', 'Start Date', 'End Date']
+        num_page = 30
+        for ii in range(int(np.ceil(len(dqr_tab)/num_page))):
+            fig = plt.figure(figsize=(8.27, 11.69), dpi=100)
+            ax  = fig.add_subplot()
+            fig.patch.set_visible(False)
+            ax.axis('off')
+            ax.axis('tight')
+            plt.title('ARM Data Quality Report (DQR) Table', y=1.)
+            cw = [0.165, 0.085, 0.08, 0.38, 0.13, 0.13]
+            table = ax.table(cellText=dqr_tab[slice(ii * num_page, (ii + 1) *  num_page)], colLabels=header,
+                             loc='best', colWidths=cw, cellLoc='left')
+            table.scale(1,1.7)
+            table.auto_set_font_size(False)
+            table.set_fontsize(7)
+            plt.subplots_adjust(top=0.95, left=0.02, right=0.98)
+            pdf_pages.savefig(fig)
+            fig.clf()
+
+    if conf['doi_table'] is True:
+        header = ['Instrument', 'DOI']
+        num_page = 17
+        for ii in range(int(np.ceil(len(doi_tab)/num_page))):
+            fig = plt.figure(figsize=(8.27, 11.69), dpi=100)
+            ax  = fig.add_subplot()
+            fig.patch.set_visible(False)
+            ax.axis('off')
+            ax.axis('tight')
+            plt.title('ARM Data Object Identifier (DOI) Table', y=1.)
+            cw = [0.15, 0.8]
+            table = ax.table(cellText=doi_tab[slice(ii * num_page, (ii + 1) *  num_page)], colLabels=header,
+                             loc='best', colWidths=cw, cellLoc='left')
+            table.auto_set_font_size(False)
+            table.set_fontsize(8)
+            table.scale(1,3)
+            plt.subplots_adjust(top=0.9, left=0.025, right=0.975)
+            pdf_pages.savefig(fig)
+            fig.clf()
+
     pdf_pages.close()
 
     print(pd.Timestamp.now() - now)
