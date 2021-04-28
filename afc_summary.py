@@ -80,7 +80,7 @@ def get_metadata(ds, return_fac=False):
     return description
 
 
-def get_da(site, dsname, dsname2, t_delta, d, dqr):
+def get_da(site, dsname, dsname2, data_path, t_delta, d, dqr):
     """
     Function to calculate data availability for a particular instrument
 
@@ -110,9 +110,9 @@ def get_da(site, dsname, dsname2, t_delta, d, dqr):
 
     # Get files for particular day, defaults to archive area for now
     ds = site + dsname
-    files = glob.glob('/data/archive/' + site + '/' + ds + '/' + ds + '*' + d + '*nc')
+    files = glob.glob('/'.join([data_path, site, ds, ds + '*' + d + '*nc']))
     if len(files) == 0:
-        files = glob.glob('/data/archive/' + site + '/' + ds + '/' + ds + '*' + d + '*cdf')
+        files = glob.glob('/'.join([data_path, site, ds, ds + '*' + d + '*cdf']))
     files = sorted(files)
 
     # Set time delta to 1 minute if not specified
@@ -210,6 +210,14 @@ if __name__ == '__main__':
     inst = list(conf['instruments'].keys())
     c_start = conf['start_date']
     c_end = conf['end_date']
+    if 'data_path' in conf:
+        data_path = conf['data_path']
+    else:
+        data_path = '/data/archive'
+    if 'chart_style' in conf:
+        chart_style = conf['chart_style']
+    else:
+        chart_style = '2D'
 
     # Set date range for plots
     start = pd.to_datetime(c_start)
@@ -218,8 +226,22 @@ if __name__ == '__main__':
     #c_dates = c_dates[0:2]
 
     # Set up plot layout.  Since it's a PDF, it's  8 plots per page
-    nrows = 8
-    ncols = 3
+    if chart_style == 'linear':
+        nrows = 20
+        ncols = 4
+        tw = 40
+        yi_spacing = 0.2
+        fs = 6
+        share_x = True
+    elif chart_style == '2D':
+        nrows = 8
+        ncols = 3
+        tw = 47
+        fs = 8
+        yi_spacing = 0.1
+        share_x = False
+    else:
+        raise ValueError('Please select linear or 2D for chart_style')
     ct = 0
 
     # Create pdf file
@@ -230,6 +252,7 @@ if __name__ == '__main__':
     # Process each instrument
     doi_tab = []
     dqr_tab = []
+    axes = None
     for ii in range(len(inst)):
         if ct ==  0:
             fig = plt.figure(figsize=(8.27, 11.69), constrained_layout=True, dpi=100)
@@ -273,18 +296,17 @@ if __name__ == '__main__':
             ax0.get_xaxis().set_visible(False)
             ax0.get_yaxis().set_visible(False)
             description = get_metadata(ds, return_fac=True)
-            ax0.text(0.5, 0.7, '\n'.join(textwrap.wrap(description, width=50)), size=16,  ha='center')
-            ax0.text(0.5, 0.4, 'Atmospheric Radiation Measurement User Facility', size=14,
+            ax0.text(0.5, 0.99, '\n'.join(textwrap.wrap(description, width=70)), size=14, ha='center')
+            ax0.text(0.5, 0.45, 'Atmospheric Radiation Measurement User Facility', size=12,
                      ha='center')
-            ct += 1
+            ct += 2
 
         # Dask loop for multiprocessing
         # workers should be set to 1 in the conf file for radars 
         task = []
-        c_dates = c_dates
         for jj, d in enumerate(c_dates):
             #task.append(get_da(site, dsname, dsname2, t_delta, d.strftime('%Y%m%d'), dqr))
-            task.append(dask.delayed(get_da)(site, dsname, dsname2, t_delta, d.strftime('%Y%m%d'), dqr))
+            task.append(dask.delayed(get_da)(site, dsname, dsname2, data_path, t_delta, d.strftime('%Y%m%d'), dqr))
         results = dask.compute(*task, num_workers=workers)
 
         # Get data from dask and create images for display
@@ -306,41 +328,73 @@ if __name__ == '__main__':
         ax0.set_frame_on(False)
         ax0.get_xaxis().set_visible(False)
         ax0.get_yaxis().set_visible(False)
-        fs = 8
         yi = 0.95
-        tw = 47
         ax0.text(0, yi, '\n'.join(textwrap.wrap(description, width=tw)), size=fs, va='top')
-        yi -= 0.125
+        yi -= yi_spacing 
         if len(description) > tw:
-           yi -= 0.1 * np.floor(len(description)/tw)
+           yi -= yi_spacing * np.floor(len(description)/tw)
         ax0.text(0, yi, 'ARM Name: ' + inst[ii].upper(), size=fs, va='top')
-        yi -= 0.125
+        yi -= yi_spacing
         ds_str = ds
         if dsname2 is not None:
             ds_str += ', ' + ds2
         ds_str = '\n'.join(textwrap.wrap(ds_str, width=tw))
             
         ax0.text(0, yi, 'Datastream: ' + ds_str, size=fs, va='top')
-        yi -= 0.15
+        yi -= yi_spacing *  1.1
         if len(ds_str) > tw:
-           yi -= 0.1 * np.floor(len(ds_str)/tw)
+           yi -= yi_spacing * np.floor(len(ds_str)/tw)
         if conf['doi_table'] is False:
             ax0.text(0, yi, '\n'.join(textwrap.wrap(doi, width=tw)), va='top', size=fs)
 
         # Plot out the DA on the right plots
         newcmp = ListedColormap(['white', 'cornflowerblue', 'yellow', 'red'])
-        ax1 = fig.add_subplot(gs[ct, 1:], rasterized=True)
-        ax1.pcolormesh(c_dates, y_times, np.transpose(img), vmin=0, vmax=3,
-                       cmap=newcmp, shading='flat', zorder=0, edgecolors='face')
-        ax1.pcolor(c_dates, y_times, np.transpose(dqr_img), hatch='/', zorder=0, alpha=0)
-        ax1.yaxis.set_major_locator(HourLocator(interval=6))
-        ax1.yaxis.set_major_formatter(DateFormatter('%H:%M'))
+        ax1 = fig.add_subplot(gs[ct, 1:], rasterized=True, sharex=axes)
+        if axes is None:
+            axes = ax1
+        if chart_style == '2D':
+            ax1.pcolormesh(c_dates, y_times, np.transpose(img), vmin=0, vmax=3,
+                           cmap=newcmp, shading='flat', zorder=0, edgecolors='face')
+            ax1.pcolor(c_dates, y_times, np.transpose(dqr_img), hatch='/', zorder=0, alpha=0)
+            ax1.yaxis.set_major_locator(HourLocator(interval=6))
+            ax1.yaxis.set_major_formatter(DateFormatter('%H:%M'))
+        elif chart_style == 'linear':
+            img = np.array(img).flatten()
+            x_times = [np.datetime64(c + dt.timedelta(hours=yt.hour, minutes=yt.minute)) for c in c_dates for yt in y_times]
+
+            idx = np.where(img > 0)[0]
+            time_delta = act.utils.determine_time_delta(np.array(x_times))
+            barh_list_green = act.utils.reduce_time_ranges(np.array(x_times)[idx], time_delta=time_delta,
+                                                           broken_barh=True)
+            ax1.broken_barh(barh_list_green, (0, 1), facecolors='green')
+
+            dqr_img = np.array(dqr_img).flatten()
+            code_map = {'suspect':  2, 'incorrect': 3, 'missing': 4}
+            code_colors = {'suspect': 'yellow', 'incorrect': 'red', 'missing': 'grey'}
+            for code in code_map:
+                idx = np.where(dqr_img == code_map[code])[0]
+                if len(idx) == 0:
+                    continue
+                time_delta = act.utils.determine_time_delta(np.array(x_times))
+                barh_list = act.utils.reduce_time_ranges(np.array(x_times)[idx], time_delta=time_delta,
+                                                               broken_barh=True)
+                ax1.broken_barh(barh_list, (0, 1), facecolors=code_colors[code])
+
+            ax1.set_ylim([0,1])
+            ax1.get_yaxis().set_visible(False)
+            if ct == 0 or ii == 0:
+                ax1.xaxis.tick_top()
+                plt.xticks(fontsize=8)
+            else:
+                ax1.get_xaxis().set_visible(False)
+            plt.subplots_adjust(top=0.95, left=0.02, right=0.96, hspace=0)
         ax1.set_xlim([pd.to_datetime(c_start), pd.to_datetime(c_end) + pd.Timedelta('1 days')])
 
         ct += 1
         if ct == nrows:
             pdf_pages.savefig(fig)
             ct =  0
+            axes = None
     pdf_pages.savefig(fig)
     fig.clf()
 

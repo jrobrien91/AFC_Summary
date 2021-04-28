@@ -7,11 +7,13 @@ conf = {
     'facility': 'M1',
     'start_date': '2019-12-01',
     'end_date': '2020-05-31',
+    'data_path': '/data/archive',
     'outname': '/home/theisen/www/afc_summary/test_conf.pdf',
+    'chart_style': 'linear',
     'dqr_table': True,
     'doi_table': True, #this will remove the DOI from besides the plots
     'instruments':{
-        'rwp': {'dsname': 'metwxtS2.b1'},
+        'metwxt': {'dsname': 'metwxtS2.b1'},
         'wb': {'dsname': 'wbpluvio2M1.a1'}
     }
 }
