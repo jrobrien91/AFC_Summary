@@ -72,15 +72,18 @@ def get_metadata(ds, return_fac=False):
     metadata_url = 'https://adc.arm.gov/solr8/metadata/select?q=datastream%3A' + ds
     r = requests.get(url=metadata_url)
     response = r.json()['response']
-    response = response['docs'][0]
-    description = response['instrument_name_text']
-    if return_fac:
-        description = response['facility_name']
+    try:
+        response = response['docs'][0]
+        description = response['instrument_name_text']
+        if return_fac:
+            description = response['facility_name']
+    except:
+        description = ds
 
     return description
 
 
-def get_da(site, dsname, dsname2, data_path, t_delta, d, dqr):
+def get_da(site, dsname, dsname2, data_path, t_delta, d, dqr, c_start, c_end):
     """
     Function to calculate data availability for a particular instrument
 
@@ -100,6 +103,10 @@ def get_da(site, dsname, dsname2, data_path, t_delta, d, dqr):
     dqr : dict
         Dictionary from get_dqr.  This allows for DQRing of data without
         multiple pings of the DQR web service at once
+    c_start : str
+        Campaign start date
+    c_end : str
+        Campaign end date
 
     Returns
     -------
@@ -164,6 +171,10 @@ def get_da(site, dsname, dsname2, data_path, t_delta, d, dqr):
         for jj, d in enumerate(dqr['dqr_num']):
             dqr_start = dt.datetime.strptime(dqr['sdate'][jj], '%Y%m%d.%H%M%S')
             dqr_end = dt.datetime.strptime(dqr['edate'][jj], '%Y%m%d.%H%M%S')
+            # Check for open-ended DQRs
+            if dt.datetime(3000, 1, 1) < dqr_end:
+                dqr_end = dt.datetime.strptime(c_end, '%Y-%m-%d') + dt.timedelta(days=1)
+    
             idx = (counts.index > dqr_start) & (counts.index < dqr_end)
             idx = np.where(idx)[0]
             assessment = dqr['code'][jj]
@@ -283,6 +294,9 @@ if __name__ == '__main__':
         if 't_delta' in conf['instruments'][inst[ii]]:
             t_delta = conf['instruments'][inst[ii]]['t_delta']
 
+        if 'data_path' in conf['instruments'][inst[ii]]:
+            data_path = conf['instruments'][inst[ii]]['data_path']
+
         # Get number of workers if defined.  Should be 1 worker for radars to
         # avoid core dumps
         workers = None
@@ -306,7 +320,7 @@ if __name__ == '__main__':
         task = []
         for jj, d in enumerate(c_dates):
             #task.append(get_da(site, dsname, dsname2, t_delta, d.strftime('%Y%m%d'), dqr))
-            task.append(dask.delayed(get_da)(site, dsname, dsname2, data_path, t_delta, d.strftime('%Y%m%d'), dqr))
+            task.append(dask.delayed(get_da)(site, dsname, dsname2, data_path, t_delta, d.strftime('%Y%m%d'), dqr, c_start, c_end))
         results = dask.compute(*task, num_workers=workers)
 
         # Get data from dask and create images for display

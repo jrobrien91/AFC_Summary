@@ -11,28 +11,16 @@ conf = {
     'dqr_table': True,
     'doi_table': True, #this will remove the DOI from besides the plots
     'instruments':{
-        #'aeri': {'dsname': 'aerisummaryM1.b1'},
-        #'ceil': {'dsname': 'ceilM1.b1'},
-        #'ecor': {'dsname': '30ecorM1.b1', 't_delta': 30},
-        #'gndrad': {'dsname': 'gndrad60sM1.b1'},
-        #'irt': {'dsname': 'gndirtM1.b1'},
-        #'irt': {'dsname': 'irtM1.b1'},
-        #'kazr': {'dsname': 'kazrcfrgeM1.a1', 'workers': 1},
-        #'ldis': {'dsname': 'ldM1.b1'},
-        #'maws': {'dsname': 'mawsM1.b1'},
-        #'met': {'dsname': 'metM1.b1'},
-        #'mfr': {'dsname': 'mfr10mM1.b1'},
-        #'mfrsr': {'dsname': 'mfrsrM1.b1'},
-        #'mpl': {'dsname': 'mplpolfsM1.b1'},
+        'aeri': {'dsname': 'aerisummaryM1.b1'},
+        'ceil': {'dsname': 'ceilM1.b1'},
+        'dl': {'dsname': 'dlfptM1.a1', 'dsname2': 'dlusrM1.a1'},
+        'hsrl': {'dsname': 'hsrlM1.a1', 'data_path': '/data/datastream'},
+        'ldis': {'dsname': 'ldM1.b1'},
+        'mpl': {'dsname': 'mplpolfsM1.b1'},
         'mwr': {'dsname': 'mwrlosM1.b1'},
-        #'mwr3c': {'dsname': 'mwr3cM1.b1'},
-        #'nfov': {'dsname': 'nfov2chM1.b1'},
-        #'rwp': {'dsname': '1290rwpprecipconM1.a1', 'dsname2': '1290rwpwindconM1.a1', 't_delta': 10},
-        #'sebs': {'dsname': 'sebsM1.b1', 't_delta': 30},
-        #'skyrad': {'dsname': 'skyrad60sM1.b1'},
-        #'sodar': {'dsname': 'sodarM1.b1', 't_delta': 30},
-        #'sonde': {'dsname': 'sondewnpnM1.b1', 't_delta': 1440/4},
-        #'tsi': {'dsname': 'tsiskycoverM1.b1'},
-        #'wb': {'dsname': 'wbpluvio2M1.a1'}
+        'mwr3c': {'dsname': 'mwr3cM1.b1'},
+        'rwp': {'dsname': '1290rwpprecipconM1.a1', 'dsname2': '1290rwpwindconM1.a1', 't_delta': 10},
+        'sonde': {'dsname': 'sondewnpnM1.b1', 't_delta': 1440/4},
+        'tsi': {'dsname': 'tsiskycoverM1.b1', 'data_path': '/data/datastream'}
     }
 }
