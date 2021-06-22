@@ -378,9 +378,10 @@ if __name__ == '__main__':
 
             idx = np.where(img > 0)[0]
             time_delta = act.utils.determine_time_delta(np.array(x_times))
-            barh_list_green = act.utils.reduce_time_ranges(np.array(x_times)[idx], time_delta=time_delta,
-                                                           broken_barh=True)
-            ax1.broken_barh(barh_list_green, (0, 1), facecolors='green')
+            if len(idx) > 0:
+                barh_list_green = act.utils.reduce_time_ranges(np.array(x_times)[idx], time_delta=time_delta,
+                                                               broken_barh=True)
+                ax1.broken_barh(barh_list_green, (0, 1), facecolors='green')
 
             dqr_img = np.array(dqr_img).flatten()
             code_map = {'suspect':  2, 'incorrect': 3, 'missing': 4}
