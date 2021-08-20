@@ -174,7 +174,7 @@ def get_da(site, dsname, dsname2, data_path, t_delta, d, dqr, c_start, c_end):
             # Check for open-ended DQRs
             if dt.datetime(3000, 1, 1) < dqr_end:
                 dqr_end = dt.datetime.strptime(c_end, '%Y-%m-%d') + dt.timedelta(days=1)
-    
+   
             idx = (counts.index > dqr_start) & (counts.index < dqr_end)
             idx = np.where(idx)[0]
             assessment = dqr['code'][jj]
@@ -190,9 +190,30 @@ def get_da(site, dsname, dsname2, data_path, t_delta, d, dqr, c_start, c_end):
         dqr_data = dqr_data['time'].tolist()
         obj.close()
     else:
+        counts = df1
+        counts[counts > 1] = 1
+        dqr_counts = counts * 0.
+        # Flag data for  DQRs
+        # Work on passing DQR times to get_da to flag
+        for jj, d in enumerate(dqr['dqr_num']):
+            dqr_start = dt.datetime.strptime(dqr['sdate'][jj], '%Y%m%d.%H%M%S')
+            dqr_end = dt.datetime.strptime(dqr['edate'][jj], '%Y%m%d.%H%M%S')
+            # Check for open-ended DQRs
+            if dt.datetime(3000, 1, 1) < dqr_end:
+                dqr_end = dt.datetime.strptime(c_end, '%Y-%m-%d') + dt.timedelta(days=1)
+   
+            idx = (counts.index > dqr_start) & (counts.index < dqr_end)
+            idx = np.where(idx)[0]
+            assessment = dqr['code'][jj]
+            if len(idx) > 0:
+                dqr_counts.iloc[idx]  = code_map[assessment]
+
         data = df1
         r_data = np.nan_to_num(data['counts'].tolist())
-        dqr_data = r_data * 0.
+
+        dqr_data = dqr_counts
+        dqr_data.loc[dqr_data.counts == 0, 'counts'] = np.nan
+        dqr_data = dqr_data.counts.tolist()
 
     return {'data': r_data, 't_delta': t_delta, 'date': d0, 'dqr_data': dqr_data}
 
@@ -244,6 +265,10 @@ if __name__ == '__main__':
         yi_spacing = 0.2
         fs = 6
         share_x = True
+        if conf['info_style'] == 'simple':
+            fs = 9
+            tw = 50
+            yi_spacing = 0.275
     elif chart_style == '2D':
         nrows = 8
         ncols = 3
@@ -343,23 +368,33 @@ if __name__ == '__main__':
         ax0.get_xaxis().set_visible(False)
         ax0.get_yaxis().set_visible(False)
         yi = 0.95
-        ax0.text(0, yi, '\n'.join(textwrap.wrap(description, width=tw)), size=fs, va='top')
-        yi -= yi_spacing 
-        if len(description) > tw:
-           yi -= yi_spacing * np.floor(len(description)/tw)
-        ax0.text(0, yi, 'ARM Name: ' + inst[ii].upper(), size=fs, va='top')
-        yi -= yi_spacing
-        ds_str = ds
-        if dsname2 is not None:
-            ds_str += ', ' + ds2
-        ds_str = '\n'.join(textwrap.wrap(ds_str, width=tw))
-            
-        ax0.text(0, yi, 'Datastream: ' + ds_str, size=fs, va='top')
-        yi -= yi_spacing *  1.1
-        if len(ds_str) > tw:
-           yi -= yi_spacing * np.floor(len(ds_str)/tw)
-        if conf['doi_table'] is False:
-            ax0.text(0, yi, '\n'.join(textwrap.wrap(doi, width=tw)), va='top', size=fs)
+        if conf['info_style'] == 'simple':
+            ax0.text(0, yi, inst[ii].upper(), size=fs, va='top', weight='bold')
+            yi -= yi_spacing
+            ds_str = ds
+            if dsname2 is not None:
+                ds_str += ', ' + ds2
+            ds_str = '\n'.join(textwrap.wrap(ds_str, width=tw))
+            ax0.text(0, yi, ds_str, size=fs, va='top')
+        else:
+            ax0.text(0, yi, '\n'.join(textwrap.wrap(description, width=tw)), size=fs, va='top')
+            yi -= yi_spacing 
+            if len(description) > tw:
+               yi -= yi_spacing * np.floor(len(description)/tw)
+            ax0.text(0, yi, 'ARM Name: ' + inst[ii].upper(), size=fs, va='top')
+
+            yi -= yi_spacing
+            ds_str = ds
+            if dsname2 is not None:
+                ds_str += ', ' + ds2
+            ds_str = '\n'.join(textwrap.wrap(ds_str, width=tw))
+            ax0.text(0, yi, 'Datastream: ' + ds_str, size=fs, va='top')
+
+            yi -= yi_spacing *  1.1
+            if len(ds_str) > tw:
+               yi -= yi_spacing * np.floor(len(ds_str)/tw)
+            if conf['doi_table'] is False:
+                ax0.text(0, yi, '\n'.join(textwrap.wrap(doi, width=tw)), va='top', size=fs)
 
         # Plot out the DA on the right plots
         newcmp = ListedColormap(['white', 'cornflowerblue', 'yellow', 'red'])
