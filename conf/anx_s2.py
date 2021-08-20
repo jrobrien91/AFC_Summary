@@ -10,8 +10,8 @@ conf = {
     'outname': '/home/theisen/www/afc_summary/anx_s2.pdf', #options are png, pdf, etc
     'chart_style': 'linear',
     'info_style': 'simple',
-    'dqr_table': True,
-    'doi_table': True, #this will remove the DOI from besides the plots
+    'dqr_table': False,
+    'doi_table': False, #this will remove the DOI from besides the plots
     'instruments':{
         'ceil': {'dsname': 'ceil10mS2.b1'},
         'dl': {'dsname': 'dlfptS2.b1', 'dsname2': 'dlppiS2.b1'},

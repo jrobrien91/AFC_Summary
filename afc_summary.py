@@ -283,6 +283,8 @@ if __name__ == '__main__':
     # Create pdf file
     if 'outname' in conf:
         filename = conf['outname']
+    ext = filename.split('.')[-1]
+
     pdf_pages = PdfPages(filename)
 
     # Process each instrument
