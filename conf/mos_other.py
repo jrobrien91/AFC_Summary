@@ -8,7 +8,6 @@ conf = {
     'start_date': '2019-10-01',
     'end_date': '2020-9-30',
     'outname': '/home/theisen/www/afc_summary/mos_other_tables.pdf', #options are png, pdf, etc
-    'data_path': '/data/datastream',
     'chart_style': 'linear',
     'dqr_table': True,
     'doi_table': True, #this will remove the DOI from besides the plots

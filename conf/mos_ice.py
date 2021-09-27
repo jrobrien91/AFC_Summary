@@ -16,7 +16,7 @@ conf = {
         'irt': {'dsname': 'gndirtS3.b1'},
         'gndrad': {'dsname': 'gndrad60sS3.b1'},
         'ldis': {'dsname': 'ldS3.b1'},
-        'mfr': {'dsname': 'mfr3mS3.b1', 'data_path': '/data/datastream'},
+        'mfr': {'dsname': 'mfr3mS3.b1'},
         'met': {'dsname': 'pwdS3.b1'},
         'wb': {'dsname': 'wbpluvio2S3.a1'}
     }

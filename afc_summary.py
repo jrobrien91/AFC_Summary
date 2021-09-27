@@ -258,6 +258,8 @@ if __name__ == '__main__':
     #c_dates = c_dates[0:2]
 
     # Set up plot layout.  Since it's a PDF, it's  8 plots per page
+    if 'info_style' not in conf:
+        conf['info_style'] = 'complex'
     if chart_style == 'linear':
         nrows = 20
         ncols = 4

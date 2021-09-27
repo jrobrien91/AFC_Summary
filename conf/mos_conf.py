@@ -6,7 +6,7 @@ conf = {
     'site': 'mos',
     'facility': 'M1',
     'start_date': '2019-10-01',
-    'end_date': '2020-9-30',
+    'end_date': '2020-10-01',
     'outname': '/home/theisen/www/afc_summary/mos_tables.pdf', #options are png, pdf, etc
     'chart_style': 'linear',
     'dqr_table': True,
@@ -15,12 +15,16 @@ conf = {
         'aeri': {'dsname': 'aerisummaryM1.b1', 't_delta': 5},
         'ceil': {'dsname': 'ceilM1.b1'},
         'dl': {'dsname': 'dlfptM1.a1', 't_delta': 1440},
-        'hsrl': {'dsname': 'hsrlM1.a1', 'data_path': '/data/datastream'},
+        'hsrl': {'dsname': 'hsrlM1.a1'},
+        'kazr': {'dsname': 'kazrcfrgeM1.a1', 'workers': 1},
         'ldis': {'dsname': 'ldM1.b1'},
+        'met': {'dsname': 'pwdM1.b1'},
         'mpl': {'dsname': 'mplpolfsM1.b1'},
+        'mwacr': {'dsname': 'mwacrcfrM1.a1', 'workers': 1},
         'mwr': {'dsname': 'mwrlosM1.b1'},
-        'mwr3c': {'dsname': 'mwr3cM1.b1', 'data_path': '/data/datastream'},
-        'rwp': {'dsname': '1290bsrwpwindavgM1.b1', 'data_path': '/data/datastream', 't_delta': 60},
+        'mwr3c': {'dsname': 'mwr3cM1.b1'},
+        'rwp': {'dsname': '1290bsrwpwindavgM1.b1', 't_delta': 60},
+        'rain': {'dsname': 'srgM1.a1'},
         'sonde': {'dsname': 'sondewnpnM1.b1', 't_delta': 1440/4},
         'tsi': {'dsname': 'tsiskycoverM1.b1'}
     }

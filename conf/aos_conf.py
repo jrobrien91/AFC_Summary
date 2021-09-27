@@ -7,7 +7,9 @@ conf = {
     'facility': 'M1',
     'start_date': '2019-12-01',
     'end_date': '2020-05-31',
-    'outname': '/home/theisen/www/afc_summary/aos_table.pdf', #options are png, pdf, etc
+    'outname': '/home/theisen/www/afc_summary/anx_aos_table.pdf', #options are png, pdf, etc
+    'chart_style': 'linear',
+    'info_style': 'simple',
     'dqr_table': True,
     'doi_table': True, #this will remove the DOI from besides the plots
     'instruments':{

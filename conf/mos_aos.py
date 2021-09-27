@@ -20,10 +20,10 @@ conf = {
         'htdma': {'dsname': 'aoshtdmaM1.a1', 't_delta': 60},
         'aos': {'dsname': 'aosimpactorM1.b1', 't_delta': 60},
         'nephelometer': {'dsname': 'aosnephdry1mM1.b1'},
-        'ozone': {'dsname': 'aoso3M1.a1'}, #Bad times!
+        #'ozone': {'dsname': 'aoso3M1.b1', 'data_path': '/data/datastream'}, #Bad times!
         'psap': {'dsname': 'aospsap3w1mM1.b1'},
-        'smps': {'dsname': 'aossmpsM1.a1', 't_delta': 30},
-        'sp2': {'dsname': 'aossp2auxM1.a0', 'data_path': '/data/datastream'},
+        'smps': {'dsname': 'aossmpsM1.b1', 't_delta': 30},
+        #'sp2': {'dsname': 'aossp2auxM1.a0'},
         'uhsas': {'dsname': 'aosuhsasM1.b1'},
     }
 }
