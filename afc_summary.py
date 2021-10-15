@@ -62,7 +62,11 @@ def get_doi(site, dsname, c_start, c_end):
     doi_url += '&dataLevel=' + dsname.split('.')[-1]
     doi_url += '&startDate=' + c_start
     doi_url += '&endDate=' + c_end
-    doi = requests.get(url=doi_url).json()['citation']
+    doi = requests.get(url=doi_url)
+    if len(doi.text) > 0:
+        doi = doi.json()['citation']
+    else:
+        doi = 'N/A'
 
     return doi
 
