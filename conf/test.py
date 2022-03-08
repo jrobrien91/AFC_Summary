@@ -5,14 +5,15 @@
 conf = {
     'site': 'hou',
     'facility': 'M1',
-    'start_date': '2021-08-01',
-    'end_date': '2021-10-01',
-    'outname': '/home/theisen/www/afc_summary/test.pdf', #options are png, pdf, etc
+    'start_date': '2021-09-01',
+    'end_date': '2022-10-01',
+    'outname': '/home/theisen/www/afc_summary/hou_aos_tables_linear.pdf', #options are png, pdf, etc
     'chart_style': 'linear',
     'info_style': 'simple',
+    'data_path': '/data/archive',
     'dqr_table': True,
     'doi_table': True, #this will remove the DOI from besides the plots
     'instruments':{
-        'rwp': {'dsname': '915rwpwindconX10.a1', 'data_path': '/data/datastream', 't_delta': 60},
+        'acsm': {'dsname': 'aosacsmM1.a0', 't_delta': 30},
     }
 }

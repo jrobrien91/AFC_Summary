@@ -13,7 +13,7 @@ conf = {
     'doi_table': True, #this will remove the DOI from besides the plots
     'instruments':{
         'irt': {'dsname': 'irtS3.b1'},
-        'irt': {'dsname': 'gndirtS3.b1'},
+        'gndirt': {'dsname': 'gndirtS3.b1'},
         'gndrad': {'dsname': 'gndrad60sS3.b1'},
         'ldis': {'dsname': 'ldS3.b1'},
         'mfr': {'dsname': 'mfr3mS3.b1'},
