@@ -13,11 +13,11 @@ conf = {
     'dqr_table': True,
     'doi_table': True, #this will remove the DOI from besides the plots
     'instruments':{
-        'acsm': {'dsname': 'aosacsmtofS2.a0', 't_delta': 30},
+        'acsm': {'dsname': 'aosacsmtofspecS2.a1', 't_delta': 30},
         'ccn': {'dsname': 'aosccn2colaS2.b1'},
         'co-analyzer': {'dsname': 'aoscoS2.b1'},
         'cpc': {'dsname': 'aoscpcf1mS2.b1'},
-        'cpcuf': {'dsname': 'aoscpcu1mS2.b1'},
+        'cpcuf': {'dsname': 'aoscpcuf1mS2.b1'},
         'htdma': {'dsname': 'aoshtdmaS2.a1', 't_delta': 60},
         'aosmet': {'dsname': 'aosmetS2.a1'},
         'nephelometer': {'dsname': 'aosnephdry1mS2.b1'},

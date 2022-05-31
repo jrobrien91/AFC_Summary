@@ -30,7 +30,7 @@ def get_dqr(ds):
 
     """
     # Build URL and call through requests
-    url = ''.join(("https://www.archive.arm.gov/dqrws/ARMDQR?datastream=", ds,
+    url = ''.join(("https://www.adc.arm.gov/dqrws/ARMDQR?datastream=", ds,
                    "&dqrfields=dqrid,starttime,endtime,metric,subject&timeformat=YYYYMMDD.hhmmss",
                    "&searchmetric=incorrect,suspect,missing"))
     r = requests.get(url=url)

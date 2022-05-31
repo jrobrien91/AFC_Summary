@@ -34,7 +34,7 @@ conf = {
         'mwrhf': {'dsname': 'mwrhfM1.b1'},
         'nfov': {'dsname': 'nfov2chM1.b1'},
         'rwp': {'dsname': '915rwpwindconX10.a1', 'dsname2': '915rwpprecipconX10.a1', 't_delta': 60},
-        '1290rwp': {'dsname': '1290rwpwindconM1.a1', 'dsname2': '1290rwpprecipconM1.a1', 't_delta': 60, 'data_path': '/data/datastream'},
+        '1290rwp': {'dsname': '1290rwpwindconM1.a1', 'dsname2': '1290rwpprecipconM1.a1', 't_delta': 60},
         'sebs': {'dsname': 'sebsM1.b1', 't_delta': 30},
         'skyrad': {'dsname': 'skyrad60sM1.b1'},
         'tsi': {'dsname': 'tsiskycoverM1.b1'},

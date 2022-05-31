@@ -33,7 +33,7 @@ conf = {
         'rwp': {'dsname': '915rwpwindmeanlowM1.a1', 'dsname2': '915rwpprecipmeanlowM1.a1', 't_delta': 60},
         'sebs': {'dsname': 'sebsM1.b1', 't_delta': 30},
         'skyrad': {'dsname': 'skyrad60sM1.b1'},
-        'sonde': {'dsname': 'sondewnpnM1.b1'},
+        'sonde': {'dsname': 'sondewnpnM1.b1', 't_delta': 1440/2},
         'tsi': {'dsname': 'tsiskycoverM1.b1'},
         'wb': {'dsname': 'wbpluvio2M1.a1'},
     }
