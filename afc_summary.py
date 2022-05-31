@@ -244,8 +244,6 @@ if __name__ == '__main__':
     # Get configuration information
     site = conf['site']
     inst = list(conf['instruments'].keys())
-    c_start = conf['start_date']
-    c_end = conf['end_date']
     if 'data_path' in conf:
         data_path = conf['data_path']
     else:
@@ -256,10 +254,20 @@ if __name__ == '__main__':
         chart_style = '2D'
 
     # Set date range for plots
+    if 'start_date' in conf:
+        c_start = conf['start_date']
+    if 'end_date' in conf:
+        c_end = conf['end_date']
+    if 'previous_days' in conf:
+        c_end = dt.date.today()
+        c_start = c_end - dt.timedelta(days=conf['previous_days'])
+        c_end = str(c_end)
+        c_start = str(c_start)
+
+    print(c_end, c_start)
     start = pd.to_datetime(c_start)
     end = pd.to_datetime(c_end)
     c_dates = pd.date_range(start, end + dt.timedelta(days=1), freq='d')
-    #c_dates = c_dates[0:2]
 
     # Set up plot layout.  Since it's a PDF, it's  8 plots per page
     if 'info_style' not in conf:
