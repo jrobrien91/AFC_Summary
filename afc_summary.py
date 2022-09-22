@@ -264,7 +264,6 @@ if __name__ == '__main__':
         c_end = str(c_end)
         c_start = str(c_start)
 
-    print(c_end, c_start)
     start = pd.to_datetime(c_start)
     end = pd.to_datetime(c_end)
     c_dates = pd.date_range(start, end + dt.timedelta(days=1), freq='d')

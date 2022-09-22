@@ -21,7 +21,7 @@ conf = {
         'htdma': {'dsname': 'aoshtdmaS2.a1', 't_delta': 60},
         'aosmet': {'dsname': 'aosmetS2.a1'},
         'nephelometer': {'dsname': 'aosnephdry1mS2.b1'},
-        'ozone': {'dsname': 'aoso3S2.b1'},
+        'ozone': {'dsname': 'aoso3S2.a1'},
         'psap': {'dsname': 'aospsap3w1mS2.b1'},
         'smps': {'dsname': 'aossmpsS2.a1', 't_delta': 30},
         'sp2': {'dsname': 'aossp2bc60sS2.b1'},
