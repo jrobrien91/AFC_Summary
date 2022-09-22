@@ -15,7 +15,7 @@ import pandas as pd
 
 # Set site for processing
 site = 'hou'
-dirs = glob.glob('/data/archive/' + site + '/*aeri*')
+dirs = glob.glob('/data/archive/' + site + '/*')
 dirs.sort()
 
 # Set directories to exclude if there are image files or high-frequency files
