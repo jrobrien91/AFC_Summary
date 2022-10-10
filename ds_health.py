@@ -31,7 +31,11 @@ for d in dirs:
     if any(ed in d for ed in exclude_dirs):
         continue
     print(d)
-    files = glob.glob(d + '/*')
+    types = (d + '/*.cdf', d + '/*nc')
+    files = []
+    for ext in types:
+        files.extend(glob.glob(ext))
+
     if len(files) == 0:
         continue
     dates = [f.split('.')[-3] for f in files]
@@ -79,3 +83,4 @@ for d in dirs:
 
 df = pd.DataFrame(data=df)
 print(df.sort_values(by=['score']).to_string())
+df.to_csv('score.csv', sep='\t')
