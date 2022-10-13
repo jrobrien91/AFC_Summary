@@ -7,7 +7,8 @@ conf = {
     'facility': 'M1',
     'start_date': '2021-10-01',
     'end_date': '2022-10-01',
-    'outname': '/home/theisen/www/afc_summary/hou_tables_linear.pdf', #options are png, pdf, etc
+    #'outname': '/home/theisen/www/afc_summary/hou_tables_linear.pdf', #options are png, pdf, etc
+    'outname': '/home/jrobrien/afc_summary/hou_tables_linear.pdf',
     'chart_style': 'linear',
     'info_style': 'simple',
     'data_path': '/data/archive',
