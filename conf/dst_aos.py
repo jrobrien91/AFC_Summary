@@ -5,8 +5,8 @@
 conf = {
     'site': 'dst',
     'facility': 'M1',
-    'start_date': '2024-12-01',
-    'end_date': '2025-11-30',
+    'start_date': '2026-06-01',
+    'end_date': '2027-09-30',
     'outname': '/home/theisen/Code/AFC_Summary/images/dst/dst_aos_data_availability.pdf', #options are png, pdf, etc
     'chart_style': 'linear',
     'info_style': 'simple',
